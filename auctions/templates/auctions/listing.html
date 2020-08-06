@@ -1,0 +1,64 @@
+{% extends 'auctions/layout.html' %}
+
+{% block body %}    
+<div>
+    <div class="float-left" style="margin-left: 10%; margin-right:20px">
+        <h2>Listing: {{listing.title}}</h2>
+    </div>
+    {% if can_close %}
+        <a class="btn btn-primary btn-sm" style="color: white; margin-right: 10px" href="{% url 'close' listing.id %}">Close Bid</a>
+    {% elif not listing.listing_open %}
+        <a class="btn btn btn-danger btn-sm" style="color: white; margin-right: 10px">Bid Closed</a>
+    {% endif%}
+
+    {% if in_wl %}
+        <button type="button" class="btn btn-secondary btn-sm">watchlist</button>
+    {% endif %}
+</div>
+
+<div class="container bcontent">      
+    <div class="card" style="margin-bottom: 10px; width: 90%">
+        <div class="row no-gutters">
+            <div class="col-sm-9 col-md-3">
+                <a href="{% url 'watchlist' listing.id %}"><img class="card-img-top" src="{{ listing.listing_img.url }}" alt="{{ listing.title }}"></a>
+
+                {% if not in_wl %}
+                    <a class="btn btn-primary btn-sm" style="color: white; margin-left : 10%; margin-top: 20%" href="{% url 'watchlist' listing.id %}">add to Watchlist</a>
+                {% elif in_wl%}
+                    <a class="btn btn-primary btn-sm" style="color: white; margin-left : 10%; margin-top: 20%" href="{% url 'watchlist' listing.id %}">remove from Watchlist</a>
+                {% endif%}
+
+            </div>
+
+            <div class="col-sm-3 col-md-6 d-flex flex-column">
+                <div class="card-body ">
+                    <!-- Title -->
+                    <h6 class="card-title font-weight-bold">{{ listing.title }}   <span style="color:blue; font-style: italic" >(category: {{ category }})</span></h6>
+
+                    <!-- Text -->
+                    <p class="card-text">{{ listing.listing_desc }}</p>
+
+                    <!-- Price  -->
+                    <p>your bid: <strong>$ {{ your_bid|floatformat:2 }}</strong></p>
+                    <p>{{ bid_count }} bid(s) so far. Your bid is the current bid</p>
+
+                    <form method = "post" enctype="multipart/form-data"> 
+                        {% csrf_token %}
+                        <div class="float-left">
+                            {{ form }}
+                        </div> 
+                        <button class="btn btn-primary btn-sm" style="margin-left : 10px" type="submit">Validate Bid</button>
+                        {% if message %}
+                            <div class="alert alert-danger" role="alert" style="margin-top: 20px;">
+                                {{ message }}
+                            </div>
+                        {% endif %}
+                    </form>
+                    <p> </p>
+                    <p class="card-text small"><i>created by: <span style="color:blue">{{ listing.listing_owner}}</span>  on: {{ listing.created_at }}</i></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock body %}

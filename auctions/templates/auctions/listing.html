@@ -6,9 +6,13 @@
         <h2>Listing: {{listing.title}}</h2>
     </div>
     {% if can_close %}
-        <a class="btn btn-primary btn-sm" style="color: white; margin-right: 10px" href="{% url 'close' listing.id %}">Close Bid</a>
-    {% elif not listing.listing_open %}
-        <a class="btn btn btn-danger btn-sm" style="color: white; margin-right: 10px">Bid Closed</a>
+        <a class="btn btn-primary btn-sm" style="color: white; margin-right: 10px" href="{% url 'close' listing.id %}">Close Auction</a>
+    {% elif not listing.listing_open and listing.listing_winner == request.user %}
+        <a class="btn btn btn-danger btn-sm" style="color: white; margin-right: 10px">You Won this auctions</a>
+    {% elif not listing.listing_open and listing.listing_winner != request.user %}
+        <a class="btn btn btn-danger btn-sm" style="color: white; margin-right: 10px">Auction Closed</a>
+    {% else %}
+        <a class="btn btn btn-info btn-sm" style="color: white; margin-right: 10px">Auction Open</a>
     {% endif%}
 
     {% if in_wl %}
@@ -23,12 +27,12 @@
                 <a href="{% url 'watchlist' listing.id %}"><img class="card-img-top" src="{{ listing.listing_img.url }}" alt="{{ listing.title }}"></a>
 
                 {% if not in_wl %}
-                    <a class="btn btn-primary btn-sm" style="color: white; margin-left : 10%; margin-top: 20%" href="{% url 'watchlist' listing.id %}">add to Watchlist</a>
+                    <a class="btn btn-primary btn-sm" style="color: white; margin-left : 10%; margin-top: 5%" href="{% url 'watchlist' listing.id %}">add to Watchlist</a>
                 {% elif in_wl%}
-                    <a class="btn btn-primary btn-sm" style="color: white; margin-left : 10%; margin-top: 20%" href="{% url 'watchlist' listing.id %}">remove from Watchlist</a>
+                    <a class="btn btn-primary btn-sm" style="color: white; margin-left : 10%; margin-top: 5%; margin-bottom: 10px" href="{% url 'watchlist' listing.id %}">remove from Watchlist</a>
                 {% endif%}
-
             </div>
+           
 
             <div class="col-sm-3 col-md-6 d-flex flex-column">
                 <div class="card-body ">
@@ -39,20 +43,26 @@
                     <p class="card-text">{{ listing.listing_desc }}</p>
 
                     <!-- Price  -->
-                    <p>your bid: <strong>$ {{ your_bid|floatformat:2 }}</strong></p>
+                    <p>your latest bid: <strong>$ {{ your_bid|floatformat:2 }}</strong></p>
                     <p>{{ bid_count }} bid(s) so far. Your bid is the current bid</p>
 
                     <form method = "post" enctype="multipart/form-data"> 
                         {% csrf_token %}
                         <div class="float-left">
-                            {{ form }}
-                        </div> 
-                        <button class="btn btn-primary btn-sm" style="margin-left : 10px" type="submit">Validate Bid</button>
+                            {{ bform }}
+                        </div>
+                        {% if listing.listing_open and listing.listing_owner != request.user %}
+                            <button class="btn btn-primary" style="margin-left : 10px" type="submit">Validate Bid</button>
+                        {% endif %}
                         {% if message %}
                             <div class="alert alert-danger" role="alert" style="margin-top: 20px;">
                                 {{ message }}
                             </div>
                         {% endif %}
+                        <div>
+                            <a class="btn btn-primary btn-sm" id="add_user_comment" style="color: white; margin-left : 5px; margin-top: 5px" href="{% url 'user_comment' listing.id %}">add a comment</a>
+                        </div>
+
                     </form>
                     <p> </p>
                     <p class="card-text small"><i>created by: <span style="color:blue">{{ listing.listing_owner}}</span>  on: {{ listing.created_at }}</i></p>
@@ -61,4 +71,28 @@
         </div>
     </div>
 </div>
+
+<div class="container">      
+    <div class="card" style="width: 90%">
+        <h6 class="card-title font-weight-bold" style="margin-top: 15px; margin-left: 15px">User Comments:</h6> 
+        <div class="col-sm-12 col-md-12">    
+            <div class="column no-gutters" style="margin-left: 40px">
+                {% for user_comment in user_comments %}
+                    <div style="margin-left: 60; margin-inline: 0px; padding-inline: 0px;">
+                        <p class="card-text small"><i>comment: {{user_comment.user_comment}}</i></p>
+                    </div>
+                    <p class="card-text small" style="padding-top: 3px;"><i> - commented by: <span style="color:blue">{{user_comment.user}}</span>  on: {{ user_comment.comment_at }}</i></p>
+                <hr/>
+                {% empty %}
+                    <p class="card-text small"><i>No user has plublished any comment so far</i></p>
+                {% endfor %} 
+            </div>
+        </div>   
+    </div>
+</div>
+
+<script>
+    document.querySelector('#add_comment').addEventListener('click', () => document.querySelector('#comment_area').style.display = 'block');
+</script>
+
 {% endblock body %}

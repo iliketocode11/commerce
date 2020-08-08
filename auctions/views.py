@@ -7,14 +7,13 @@ from django.urls import reverse
 from datetime import datetime
 from django.db.models import Avg, Max, Min, Sum
 
-from . models import User, Category, Listing, Watchlist, Bid
-from . forms import ListingForm, BidForm
-
+from . models import User, Category, Listing, Watchlist, Bid, UserComment
+from . forms import ListingForm, BidForm, CommentForm
 
 def index(request):
     listings = Listing.objects.all()
     return render(request, "auctions/index.html", {
-       'listings' : listings 
+       'listings' : listings,
     })
 
 @login_required
@@ -39,13 +38,13 @@ def create_view(request):
 @login_required
 def watchlist_view(request):
     listings = Listing.objects.all().filter(watchlist__username=request.user, watchlist__in_watchlist=True)
-    return render(request, "auctions/index.html", {
+    return render(request, "auctions/watchlist.html", {
         'listings' : listings
         })
 
 
 @login_required
-def categories(request):    
+def categories(request):
     categories = Category.objects.all()
     print(categories)
     return render(request, "auctions/categories.html", {
@@ -56,8 +55,10 @@ def categories(request):
 @login_required
 def category(request, cat_id):  
     listings = Listing.objects.all().filter(cat_id=cat_id)
-    return render(request, "auctions/index.html", {
-        'listings' : listings
+    category = Category.objects.get(id=cat_id)
+    return render(request, "auctions/categorylist.html", {
+        'listings' : listings,
+        'category' : category,
         })
 
 
@@ -87,8 +88,22 @@ def watchlist_add(request, listing_id):
 def close(request, listing_id):
     listing = Listing.objects.get(pk=listing_id)
     if listing.listing_owner == request.user and listing.listing_open == True:
+        
+        bid_max = Bid.objects.all().filter(listing_id=listing_id).aggregate(Max('user_bid'))
+        print('bid_max : ', bid_max)
+        winner_bid = bid_max['user_bid__max']
+        print('winner_bid: :', winner_bid)
+
+
+        bid=Bid.objects.all().get(user_bid=winner_bid)
+        if bid != none:
+            listing.listing_winner=bid.user
+        
+        print('listing_id:', bid.user)
         listing.listing_open =False
+        listing.listing_final_price = winner_bid 
         listing.save()
+
 
     return redirect('listing', listing_id=listing_id)
  
@@ -126,12 +141,19 @@ def listing_view(request, listing_id):
     print('owner: ', owner)
     print('can_close: ', can_close)
 
+    starting_price = listing.starting_price
+    print("sarting Price: ", starting_price)
+
     bid_max = Bid.objects.all().filter(listing_id=listing_id).aggregate(Max('user_bid'))
     print('bid_max: ', bid_max)
 
-    highest_bid = bid_max['user_bid__max']
-    if highest_bid == None:
-        highest_bid = 0
+    if (bid_max['user_bid__max'] == None):
+        highest_bid = starting_price
+    elif (bid_max['user_bid__max']>starting_price):    
+        highest_bid=bid_max['user_bid__max']
+    else:
+        highest_bid=starting_price
+
     print('highest bid: ', highest_bid)
     
     your_actual_max = Bid.objects.all().filter(listing_id=listing_id, user=request.user).aggregate(Max('user_bid'))
@@ -147,11 +169,14 @@ def listing_view(request, listing_id):
 
     message =''
 
-    if request.method == 'POST': 
-            form = BidForm(request.POST, request.FILES)
+    user_comments = UserComment.objects.filter(listing_id=listing_id).order_by('comment_at').reverse()
+    print(user_comments)
 
-            if form.is_valid(): 
-                b = form.save(commit=False)
+    if request.method == 'POST': 
+            bform = BidForm(request.POST, request.FILES)
+
+            if bform.is_valid(): 
+                b = bform.save(commit=False)
                 b.bid_at = datetime.now()
                 b.listing_id = Listing.objects.get(pk=listing_id)
                 b.user=request.user
@@ -159,43 +184,108 @@ def listing_view(request, listing_id):
                 if highest_bid < b.user_bid:
                     b.save()
                     highest_bid = b.user_bid
+                    your_bid = b.user_bid
+                    bid_count = bid_count + 1
+                    bform = BidForm()
                     return render(request,'auctions/listing.html', {
                         "listing": listing,
                         "bid_count": bid_count,
                         "your_bid": your_bid,
                         "in_wl" : in_wl,
-                        "form" : form,
+                        "bform" : bform,
                         "message" : message,
                         "owner": owner,
                         "can_close" : can_close,
                         "category" : category.cat_name,
+                        "user_comments" : user_comments,
                         }) 
                 else:
-                    message = 'Bid is lower than actual bid'
+                    message = str('{0:.2g}'. format(b.user_bid)) + ' is lower than highest bid'
+                    bform = BidForm()
                     return render(request, "auctions/listing.html", {
                         "listing": listing,
                         "bid_count": bid_count,
                         "your_bid": your_bid,
                         "in_wl" : in_wl,
-                        "form" : form,
+                        "bform" : bform,
                         "message" : message,
                         "owner": owner,
                         "can_close" : can_close,
                         "category" : category.cat_name,
                     })
-    else:    
-        form = BidForm()
+    else:
+        listing = Listing.objects.get(pk=listing_id)
+        if listing.listing_open == True and listing.listing_owner != request.user:
+            bform = BidForm()
+        else:
+            bform = '' 
         return render(request, "auctions/listing.html", {
             "listing": listing,
             "bid_count": bid_count,
             "your_bid": your_bid,
             "in_wl" : in_wl,
-            "form" : form,
+            "bform" : bform,
             "message" : message,
             "owner": owner,
             "can_close" : can_close,
             "category" : category.cat_name,
+            "user_comments" : user_comments,
             })
+
+
+def user_comment(request, listing_id):
+    try:
+        listing = Listing.objects.get(pk=listing_id)
+        print(listing)
+        category = Category.objects.get(cat_name=listing.cat_id)
+        print('category: ', category.cat_name)          
+    except Listing.DoesNotExist:
+        raise Http404("Listing not found.")
+    
+    if request.method == 'POST': 
+        cform = CommentForm(request.POST, request.FILES)
+        category = Category.objects.get(cat_name=listing.cat_id)
+
+        print(cform.is_valid())
+
+        if cform.is_valid():
+            print(cform)
+            c = cform.save(commit=False)
+            c.comment_at=datetime.now()
+            c.user=request.user
+            c.listing_id = listing
+            
+            c.save() 
+           
+
+            print('listing_id: ', listing_id)
+            print('listing_id: ', c.listing_id)
+            print(c.user_comment)
+
+            return redirect('listing', listing_id=listing_id)
+
+            # return render(request,'auctions/listing.html', {
+            #     "listing": listing,
+            #     # "bid_count": bid_count,
+            #     # "your_bid": your_bid,
+            #     # "in_wl" : in_wl,
+            #     "cform" : cform,
+            #     # "message" : message,
+            #     # "owner": owner,
+            #     # "can_close" : can_close,
+            #     "category" : category.cat_name,
+            #     }) 
+    else:    
+        cform = CommentForm()
+
+        return render(request, "auctions/commentform.html", {
+                "listing": listing,
+                # "bid_count": bid_count,
+                # "your_bid": your_bid,
+                # "in_wl" : in_wl,
+                "cform" : cform,
+                "category" : category.cat_name,
+                })
 
 
 def success(request): 

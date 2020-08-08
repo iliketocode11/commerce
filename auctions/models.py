@@ -37,8 +37,10 @@ class Listing(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     listing_open = models.BooleanField(default=True)
-    listing_owner = models.ForeignKey(User, null=True , on_delete=models.CASCADE)
-    
+    listing_owner = models.ForeignKey(User, null=True , on_delete=models.CASCADE, related_name='owner')
+    listing_winner = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True, related_name='winner')
+    listing_final_price = models.DecimalField(decimal_places=2, max_digits=10, default = 0, validators=[validate_price]) 
+
     def __str__(self):
         return f"title: {self.title} category: {self.cat_id}"
 
@@ -58,15 +60,15 @@ class Watchlist(models.Model):
 class Bid(models.Model):
     listing_id = models.ForeignKey(Listing, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    user_bid = models.DecimalField(decimal_places=2, max_digits=10, validators=[validate_price])
+    user_bid = models.DecimalField(decimal_places=2, max_digits=10)
     bid_at = models.DateTimeField(auto_now_add=True)
     bid_status = models.BooleanField(default= True)
 
     def __str__(self):
-        return f"listing_id: {self.listing_id} {self.user} bid: {self.user_bid}"
+        return f"listing_id: {self.listing_id} user: {self.user} bid: {self.user_bid}"
 
 
-class Comment(models.Model):
+class UserComment(models.Model):
     listing_id = models.ForeignKey(Listing, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     user_comment = models.TextField()

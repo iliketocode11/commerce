@@ -1,5 +1,5 @@
 from django import forms 
-from .models import Category, Listing, Bid
+from .models import Category, Listing, Bid, UserComment
   
 class ListingForm(forms.ModelForm): 
     class Meta: 
@@ -33,16 +33,16 @@ class BidForm(forms.ModelForm):
         labels = {'user_bid': ''}
 
         widgets = {
-            'user_bid' : forms.TextInput(attrs={'class' : 'form-control', 'placeholder': 'Enter your Bid Amount'})
+            'user_bid' : forms.TextInput(attrs={'class' : 'form-control', 'placeholder': 'Enter your Bid Amount', 'default': ''})
             }
 
-class CommentForm(forms.ModelForm): 
+class CommentForm(forms.ModelForm):     
     class Meta: 
-        model = Comment 
-        fields = ['comment']
+        model = UserComment 
+        fields = ['user_comment']
 
         labels = {'user_comment': ''}
 
         widgets = {
-            'user_comment' : forms.Textarea(attrs={'class' : 'form-control', 'placeholder': 'Enter your comment', 'rows':5}),
+            'user_comment' : forms.Textarea(attrs={'class' : 'form-control', 'placeholder': 'Enter your comment'}),
             }

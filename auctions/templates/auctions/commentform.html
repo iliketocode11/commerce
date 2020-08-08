@@ -1,0 +1,43 @@
+{% extends "auctions/layout.html" %}
+
+{% block body %}
+
+<div class="card" style="margin-bottom: 10px; width: 90%">
+    <div class="row no-gutters">
+        <div class="col-sm-9 col-md-3">
+            <a href="{% url 'watchlist' listing.id %}"><img class="card-img-top" src="{{ listing.listing_img.url }}" alt="{{ listing.title }}"></a>
+
+            <!-- {% if not in_wl %}
+                <a class="btn btn-primary btn-sm" style="color: white; margin-left : 10%; margin-top: 10%" href="{% url 'watchlist' listing.id %}">add to Watchlist</a>
+            {% elif in_wl%}
+                <a class="btn btn-primary btn-sm" style="color: white; margin-left : 10%; margin-top: 10%" href="{% url 'watchlist' listing.id %}">remove from Watchlist</a>
+            {% endif%} -->
+        </div>
+       
+
+        <div class="col-sm-3 col-md-6 d-flex flex-column">
+            <div class="card-body ">
+                <!-- Title -->
+                <h6 class="card-title font-weight-bold">{{ listing.title }}   <span style="color:blue; font-style: italic" >(category: {{ category }})</span></h6>
+
+                <!-- Text -->
+                <!-- <p class="card-text">{{ listing.listing_desc }}</p> -->
+
+                <!-- Price  -->
+                <!-- <p>your bid: <strong>$ {{ your_bid|floatformat:2 }}</strong></p>
+                <p>{{ bid_count }} bid(s) so far. Your bid is the current bid</p> -->
+
+                <form method = "post" enctype="multipart/form-data"> 
+                    {% csrf_token %}
+                    {{ cform }} 
+                    <p><button class="btn btn-primary" type="submit">Save Comment</button></p> 
+                </form>
+                <p> </p>
+                <p class="card-text small"><i>created by: <span style="color:blue">{{ listing.listing_owner}}</span>  on: {{ listing.created_at }}</i></p>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+{% endblock %}

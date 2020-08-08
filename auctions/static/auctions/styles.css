@@ -5,3 +5,12 @@ body {
 .bcontent {
     margin-top: 10px;
 }
+
+#comment_area {
+    display : none;
+}
+
+
+/* #add_comment {
+    display : none;
+} */

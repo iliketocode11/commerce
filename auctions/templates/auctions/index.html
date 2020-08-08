@@ -20,16 +20,15 @@
                             {{ listing.title }}
                             {% if listing.listing_open %}
                                 <span style="color: blue; font-style: bold; font-size: smaller; margin-left: 20px;">
-                                    Auction is OPEN
                                 </span>
                             {% elif listing.listing_winner == request.user %}
                                 <span style="color: red; font-style: bold; font-size: smaller; margin-left: 20px;">
-                                    Auction is WON
+                                    You won this Auction
                                 </span>
                             {% else %}
                                 <span style="color: red; font-style: bold; font-size: smaller; margin-left: 20px;">
-                                    Auction is CLOSED
                                 </span>
+                                <p class="card-text small float-right" >won by: {{listing.listing_winner}}</p>
                             {% endif %}
                         </h6>
 

@@ -5,13 +5,16 @@ from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from datetime import datetime
-from django.db.models import Avg, Max, Min, Sum
+from django.db.models import Avg, Max, Min, Sum, Q
 
 from . models import User, Category, Listing, Watchlist, Bid, UserComment
 from . forms import ListingForm, BidForm, CommentForm
 
 def index(request):
-    listings = Listing.objects.all()
+    if request.user.is_authenticated:
+        listings = Listing.objects.all().filter(Q(listing_open=True) | Q(listing_winner=request.user))
+    else:
+        listings = Listing.objects.all().filter(Q(listing_open=True))    
     return render(request, "auctions/index.html", {
        'listings' : listings,
     })
@@ -33,7 +36,11 @@ def create_view(request):
 
 @login_required
 def watchlist_view(request):
-    listings = Listing.objects.all().filter(watchlist__username=request.user, watchlist__in_watchlist=True)
+    listings = Listing.objects.all().filter(
+        Q(watchlist__username=request.user),
+        Q(watchlist__in_watchlist=True), 
+        (Q(listing_open=True) | Q(listing_winner=request.user))
+        )
     return render(request, "auctions/watchlist.html", {
         'listings' : listings
         })
@@ -50,7 +57,10 @@ def categories(request):
 
 @login_required
 def category(request, cat_id):  
-    listings = Listing.objects.all().filter(cat_id=cat_id)
+    listings = Listing.objects.all().filter(
+        Q(cat_id=cat_id),
+        (Q(listing_open=True) | Q(listing_winner=request.user))
+    )
     category = Category.objects.get(id=cat_id)
     return render(request, "auctions/categorylist.html", {
         'listings' : listings,
@@ -92,7 +102,7 @@ def close(request, listing_id):
 
 
         bid=Bid.objects.all().get(user_bid=winner_bid)
-        if bid != none:
+        if bid != None:
             listing.listing_winner=bid.user
         
         print('listing_id:', bid.user)
@@ -105,9 +115,10 @@ def close(request, listing_id):
  
 
 def listing_view(request, listing_id):
-    in_wl = False
-    owner = False
-    can_close = False
+    in_wl = False #is in watchlist
+    owner = False #is owner of the listing
+    can_close = False # the owner can close the auction
+    you_are_on_top = False
     try:
         listing = Listing.objects.get(pk=listing_id)
            
@@ -128,8 +139,6 @@ def listing_view(request, listing_id):
     category = Category.objects.get(cat_name=listing.cat_id)
     print('category: ', category.cat_name)
     
-    print('request.user: ', request.user)
-    print('listing.listing_open: ', listing.listing_open)
     if listing.listing_owner == request.user and listing.listing_open == True:
         owner = True
         can_close = True
@@ -145,20 +154,21 @@ def listing_view(request, listing_id):
 
     if (bid_max['user_bid__max'] == None):
         highest_bid = starting_price
-    elif (bid_max['user_bid__max']>starting_price):    
-        highest_bid=bid_max['user_bid__max']
     else:
-        highest_bid=starting_price
-
+        highest_bid=bid_max['user_bid__max']
+    
     print('highest bid: ', highest_bid)
     
     your_actual_max = Bid.objects.all().filter(listing_id=listing_id, user=request.user).aggregate(Max('user_bid'))
     print('your_actual_max: ', your_actual_max)
     
-    your_bid = your_actual_max['user_bid__max']
-    if your_bid == None:
-        your_bid = 0
-    print('your bid:', your_bid)
+    your_max_bid = your_actual_max['user_bid__max']
+    if your_max_bid == None:
+        your_max_bid = 0
+    print('your max bid:', your_max_bid)
+
+    if your_max_bid == highest_bid:
+        you_are_on_top = True
 
     bid_count = Bid.objects.all().filter(listing_id=listing_id).count()
     print('bid count: ', bid_count)
@@ -180,13 +190,13 @@ def listing_view(request, listing_id):
                 if highest_bid < b.user_bid:
                     b.save()
                     highest_bid = b.user_bid
-                    your_bid = b.user_bid
+                    you_are_on_top = True
                     bid_count = bid_count + 1
                     bform = BidForm()
                     return render(request,'auctions/listing.html', {
                         "listing": listing,
                         "bid_count": bid_count,
-                        "your_bid": your_bid,
+                        "highest_bid": highest_bid,
                         "in_wl" : in_wl,
                         "bform" : bform,
                         "message" : message,
@@ -194,6 +204,7 @@ def listing_view(request, listing_id):
                         "can_close" : can_close,
                         "category" : category.cat_name,
                         "user_comments" : user_comments,
+                        "you_are_on_top" : you_are_on_top,
                         }) 
                 else:
                     message = str('{0:.2g}'. format(b.user_bid)) + ' is lower than highest bid'
@@ -201,13 +212,14 @@ def listing_view(request, listing_id):
                     return render(request, "auctions/listing.html", {
                         "listing": listing,
                         "bid_count": bid_count,
-                        "your_bid": your_bid,
+                        "highest_bid": highest_bid,
                         "in_wl" : in_wl,
                         "bform" : bform,
                         "message" : message,
                         "owner": owner,
                         "can_close" : can_close,
                         "category" : category.cat_name,
+                        "you_are_on_top" : you_are_on_top,
                     })
     else:
         listing = Listing.objects.get(pk=listing_id)
@@ -218,7 +230,7 @@ def listing_view(request, listing_id):
         return render(request, "auctions/listing.html", {
             "listing": listing,
             "bid_count": bid_count,
-            "your_bid": your_bid,
+            "highest_bid": highest_bid,
             "in_wl" : in_wl,
             "bform" : bform,
             "message" : message,
@@ -226,6 +238,7 @@ def listing_view(request, listing_id):
             "can_close" : can_close,
             "category" : category.cat_name,
             "user_comments" : user_comments,
+            "you_are_on_top" : you_are_on_top,
             })
 
 

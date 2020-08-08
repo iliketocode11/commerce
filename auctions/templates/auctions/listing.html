@@ -43,8 +43,14 @@
                     <p class="card-text">{{ listing.listing_desc }}</p>
 
                     <!-- Price  -->
-                    <p>your latest bid: <strong>$ {{ your_bid|floatformat:2 }}</strong></p>
-                    <p>{{ bid_count }} bid(s) so far. Your bid is the current bid</p>
+                    <p>Actual bid: <strong>$ {{ highest_bid|floatformat:2 }}</strong></p>
+                    <p>
+                        {{ bid_count }} bid(s) so far. 
+                        {% if you_are_on_top %}
+                            Your bid is the current bid.
+                        {% endif %}
+                    </p>
+                        
 
                     <form method = "post" enctype="multipart/form-data"> 
                         {% csrf_token %}

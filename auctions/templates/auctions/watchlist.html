@@ -16,8 +16,21 @@
                 <div class="col-sm-3 col-md-6 d-flex flex-column">
                     <div class="card-body ">
                         <!-- Title -->
-                        <h6 class="card-title font-weight-bold">{{ listing.title }}</h6>
-
+                        <h6 class="card-title font-weight-bold">
+                            {{ listing.title }}
+                            {% if listing.listing_open %}
+                                <span style="color: blue; font-style: bold; font-size: smaller; margin-left: 20px;">
+                                </span>
+                            {% elif listing.listing_winner == request.user %}
+                                <span style="color: red; font-style: bold; font-size: smaller; margin-left: 20px;">
+                                    You won this Auction
+                                </span>
+                            {% else %}
+                                <span style="color: red; font-style: bold; font-size: smaller; margin-left: 20px;">
+                                </span>
+                                <p class="card-text small float-right" >won by: {{listing.listing_winner}}</p>
+                            {% endif %}
+                        </h6>
                         <!-- Text -->
                         <p class="card-text">{{ listing.listing_desc }}</p>
 

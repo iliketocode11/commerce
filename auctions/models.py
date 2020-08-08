@@ -4,15 +4,6 @@ from datetime import datetime
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 
-
-def validate_price(value):
-    if value < 0:
-        raise ValidationError(
-            _('%(value)s is not a positive number'),
-            params={'value': value},
-        )
-
-
 class User(AbstractUser):
     pass
 
@@ -33,13 +24,13 @@ class Listing(models.Model):
     listing_desc = models.TextField()
     listing_img = models.ImageField(upload_to='listing_images', default=None, blank=True, null=True)
     cat_id = models.ForeignKey(Category, default = 1, on_delete=models.CASCADE)
-    starting_price = models.DecimalField(decimal_places=2, max_digits=10, default = 0, validators=[validate_price])
+    starting_price = models.DecimalField(decimal_places=2, max_digits=10, default = 0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     listing_open = models.BooleanField(default=True)
     listing_owner = models.ForeignKey(User, null=True , on_delete=models.CASCADE, related_name='owner')
     listing_winner = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True, related_name='winner')
-    listing_final_price = models.DecimalField(decimal_places=2, max_digits=10, default = 0, validators=[validate_price]) 
+    listing_final_price = models.DecimalField(decimal_places=2, max_digits=10, default = 0) 
 
     def __str__(self):
         return f"title: {self.title} category: {self.cat_id}"

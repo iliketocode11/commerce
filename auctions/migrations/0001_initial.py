@@ -59,7 +59,7 @@ class Migration(migrations.Migration):
                 ('title', models.CharField(max_length=64)),
                 ('listing_desc', models.TextField(max_length=255)),
                 ('listing_img', models.ImageField(blank=True, default=None, null=True, upload_to='listing_images')),
-                ('start_bid', models.DecimalField(decimal_places=2, default=0, max_digits=10, validators=[auctions.models.validate_price])),
+                ('start_bid', models.DecimalField(decimal_places=2, default=0, max_digits=10)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
                 ('cat_id', models.ForeignKey(default=1, on_delete=django.db.models.deletion.CASCADE, to='auctions.Category')),
@@ -69,7 +69,7 @@ class Migration(migrations.Migration):
             name='Bid',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('user_bid', models.DecimalField(decimal_places=2, default=0, max_digits=10, validators=[auctions.models.validate_price])),
+                ('user_bid', models.DecimalField(decimal_places=2, default=0, max_digits=10)),
                 ('bid_at', models.DateTimeField(auto_now_add=True)),
                 ('bid_status', models.BooleanField(default=True)),
                 ('listing_id', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='auctions.Listing')),

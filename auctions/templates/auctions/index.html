@@ -41,7 +41,7 @@
                         {% if user.is_authenticated %}
                             <a href='{% url "listing" listing.id %}' class="card-link">Show Listing</a>
                         {% endif %}
-                        <p class="card-text small align-self-end" style="flex-direction: column;"><i>created: {{ listing.created_at }}</i></p>
+                        <p class="card-text small align-self-end" style="flex-direction: column;"><i>created: {{ listing.created_at }} by: {{ listing.listing_owner }}</i></p>
                     </div>
                 </div>
             </div>

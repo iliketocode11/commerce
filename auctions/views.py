@@ -20,16 +20,12 @@ def index(request):
 def create_view(request):
     if request.method == 'POST': 
         form = ListingForm(request.POST, request.FILES)
-        if form.is_valid(): 
-            form.save()
-            listing_id = form 
-        form = (Bid, BidForm(request.POST), request.FILES)
-        if form.is_valid(): 
-            b = form
-            b.listing_id = Listing.objects.get(pk=listing_id)
-            b.user=request.user
-            b.save()      
-            return redirect('index') 
+        if form.is_valid():
+            listing = form.save()
+            listing.listing_owner = request.user
+            listing.save()
+        return redirect('index') 
+         
     else: 
         form = ListingForm() 
         return render(request, 'auctions/createform.html', {'form' : form}) 
@@ -264,17 +260,6 @@ def user_comment(request, listing_id):
 
             return redirect('listing', listing_id=listing_id)
 
-            # return render(request,'auctions/listing.html', {
-            #     "listing": listing,
-            #     # "bid_count": bid_count,
-            #     # "your_bid": your_bid,
-            #     # "in_wl" : in_wl,
-            #     "cform" : cform,
-            #     # "message" : message,
-            #     # "owner": owner,
-            #     # "can_close" : can_close,
-            #     "category" : category.cat_name,
-            #     }) 
     else:    
         cform = CommentForm()
 

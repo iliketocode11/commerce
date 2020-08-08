@@ -9,7 +9,7 @@ class ListingForm(forms.ModelForm):
             'listing_desc': 'Description',
             'cat_id' : 'Category',
             'starting_price' : 'Starting Price',
-            'listing_img' : 'Listing Image',    
+            'listing_img' : 'Listing Image',   
         }
 
         widgets = {
@@ -17,12 +17,8 @@ class ListingForm(forms.ModelForm):
             'listing_desc' : forms.Textarea(attrs={'class' : 'form-control', 'placeholder': 'Description', 'rows':5}),
             'cat_id' : forms.Select(attrs={'class' : 'form-control'}),
             'starting_price' : forms.TextInput(attrs={'class': 'form-control'}),
+            # 'listing_img' : forms.ImageField() 
         }
-
-# class WatchlistForm(forms.ModelForm):
-#     class Meta:
-#         Model = Watchlist
-#         fields = ['user_id', 'listing_id']
 
 
 class BidForm(forms.ModelForm): 

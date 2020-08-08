@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='listing',
             name='listing_final_price',
-            field=models.DecimalField(decimal_places=2, default=0, max_digits=10, validators=[auctions.models.validate_price]),
+            field=models.DecimalField(decimal_places=2, default=0, max_digits=10),
         ),
         migrations.AddField(
             model_name='listing',
